@@ -1,0 +1,29 @@
+<project name="MOPET - Medical therapy for pediatric oncology">
+	<version position="right"/>
+  <body>
+  <links>
+      <item name="GITHUB" href="https://github.com/romanm/canoepro3" />
+    </links>
+  <!--
+    <menu name="Integration" href="integration.html" />
+    <menu name="FAQ" href="faq.html" />
+    <menu name="FAQ">
+		<item name="Overview" href="index.html"/>
+	</menu>
+  -->
+	<menu name="MOPET 0.0.0.1">
+      <item name="Introduction" href="index.html"/>
+      <item name="MOPET technische Dokumentation" href="MOPETdoc.html"/>
+      <item name="dependencies" href="dependencies.html"/>
+      <item name="integration" href="integration.html"/>
+      <item name="plugin-management" href="plugin-management.html"/>
+      <item name="plugins" href="plugins.html"/>
+      <item name="project-info" href="project-info.html"/>
+      <item name="project-summary" href="project-summary.html"/>
+      <item name="team-list" href="team-list.html"/>
+      <!--
+      <item name="samplexdoc" href="samplexdoc.html"/>
+      -->
+    </menu>
+  </body>
+</project>

@@ -1,0 +1,1661 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+ "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<book lang="de" >
+	<title>MOPET technische Dokumentation.</title>
+	<titleabbrev>mit Examples</titleabbrev>
+	<bookinfo>
+		<author>
+			<personname>
+				<honorific>Dr.med</honorific>
+				<firstname>Roman</firstname><surname>Mishchenko</surname>
+			</personname>
+		</author>
+	</bookinfo>
+	<preface id="preface1">
+		<title>Vorwort</title>
+		<para>MOPET - Qualitet für Onkologie, 
+		ist eine Computerprogramm für Planung, Definition, Austausch und Verwendung 
+		Medikamentose Therapieplane in Onkologie.
+		</para>
+		<para>
+		Die Therapieplane selbst sind mit dafür entwickelte formale Sprache 
+		"Medical Task Laguage" (MeTaL oder MTL) definiert.
+		Sehe Kapietel
+		<xref linkend="chMetal"/>.
+		</para>
+		<para>
+		MOPET ist ein Web-Application.
+		Sehe Kapietel
+		<xref linkend="chUi"/>,
+		<xref linkend="chCore" endterm="chCoreTine"/>,
+		<xref linkend="chDb" endterm="chDbTine"/>
+		.
+		</para>
+		<para>
+			Diese Programm ist herausgewachsen von Oncoworkstation Projekt (OWS) in  
+			Institut für Medizinische Informatik, Statistik und Epidemiologie (IMISE) 
+		</para>
+	</preface>
+	<chapter id="chapter_install"><title>Installation</title>
+		<para>
+		<!-- 
+			Für die Installation MOPET Entwicklerumgebung ist nötig.
+		 -->
+			Die MOPET Entwicklerumgebung benötig folgende Programmen:
+			<orderedlist>
+				<listitem> <para> Letzte Version Java JDK. OpenJDK reicht.  </para> </listitem>
+				<listitem> <para> Zwei Server PostgreSQL und Apache Tomcat.  </para> </listitem>
+				<listitem> <para> Apache maven.  </para> </listitem>
+				<listitem> <para>SpringSource Tool Suite - 
+						Eclipse-betriebene Entwicklungsumgebung zur Erstellung 
+						von Spring-Basirte Enterprise-Anwendungen.
+						<link linkend="http://www.springsource.org/downloads/sts">
+						http://www.springsource.org/downloads/sts
+						</link>
+					</para>
+				</listitem>
+				<listitem> <para> Subversion - SVN. MOPET Repository liegt
+						<link linkend="https://github.com/romanm/tcmopet1">
+							https://github.com/romanm/tcmopet1
+						</link>,
+						LDAP login wird benötigt.
+					</para>
+				</listitem>
+			</orderedlist>
+		</para>
+		<para>
+			Databank Konfiguration
+			<orderedlist>
+				<listitem>
+					<para>
+						Databenk (DB) Benutzer "MOPET_db_user_name" mit Password "MOPET_db_user_pass" Einlegen
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						Letzte MOPET DB Backup abholen.
+					</para>
+				</listitem>
+			</orderedlist>
+		</para>
+		<para>
+			Tomcat-Server Konfiguration. 
+			Ein Beispiel von <literal>$TOMCAT/conf/Catalina/localhost</literal> liegende 
+			Context <literal>MOPET.xml</literal> Datei.
+			<programlistingco>
+<programlisting><![CDATA[
+<Context docBase="/home/username/path/to/mopet1/target/mopet1" 
+		privileged="true" reloadable="true">
+	<Resource name="jdbc/ows" auth="Container"
+		type="javax.sql.DataSource" driverClassName="org.postgresql.Driver"
+		url="jdbc:postgresql://localhost/MOPET_db_name_20120709"
+		username="MOPET_db_user_name" password="MOPET_db_pass"
+		maxActive="20" maxIdle="10" maxWait="-1"
+	/>
+	<Resource name="jdbc/ows2" auth="Container"
+		type="javax.sql.DataSource" driverClassName="org.postgresql.Driver"
+		url="jdbc:postgresql://localhost/MOPET_db2_name_20120529"
+		username="MOPET_db_user_name" password="MOPET_db_pass"
+		maxActive="20" maxIdle="10" maxWait="-1"
+	/>
+</Context>
+]]></programlisting>
+			</programlistingco>
+		</para>
+	</chapter>
+	<chapter id="chMetal" xreflabel="MeTaL"><title>Abstraction - Medical task lanquage</title>
+	<!-- 
+		<titleabbrev id="chMetalShort">Kapietel MeTaL</titleabbrev>
+	 -->
+		<para>
+			Medical task lanquage - ist eine Abstraktion der Beziehungen
+			zwieschen formalizierte medizinischen Begriefen welche wird verwendet für 
+			besreibung des Zusammenhang und Ablauf verschiedenen medizinischen Aufgaben,
+			z.B. Medikamentose Therapie.
+		</para>
+		<!-- 
+		<para>
+		MeTaL kann man wiederspiegeln in XML Format, DB Model und seine JPA Version.
+		</para>
+		 -->
+		<para>
+			MeTaL existiert in MOPET als XML Datein und als 
+			Java Persistence Entity Objecten.
+			
+			<table>
+				<title>MeTaL Elementen und seien Attributen</title>
+				<tgroup cols="4">
+				<colspec colname="col_el"/>
+					<colspec colname="col_att"/>
+					<colspec colname="col_val"/>
+					<colspec colname="col_info"/>
+					<thead> <row> <entry>Element</entry> <entry>Attribut</entry> <entry>Wert</entry><entry>Info</entry> </row> </thead>
+					<tbody>
+						<row>
+							<entry morerows="1">drug</entry>
+							<entry>drug</entry>
+							<entry namest="col_val" nameend="col_info" >
+							Medikament Name</entry>
+						</row>
+						<row>
+							<entry>idgeneric</entry>
+							<entry namest="col_val" nameend="col_info" >
+							Verknüpfung mit Generik oder mit sich selbst.</entry>
+						</row>
+						<row>
+							<entry morerows="1">notice</entry>
+							<entry>notice</entry>
+							<entry namest="col_val" nameend="col_info" >
+							Text</entry>
+						</row>
+						<row>
+							<entry>type</entry>
+							<entry namest="col_val" nameend="col_info" >
+							Type von Notice.</entry>
+						</row>
+						<row>
+							<entry morerows="3">
+							task</entry>
+							<entry>task</entry>
+							<entry namest="col_val" nameend="col_info" >
+							Name</entry>
+						</row>
+						<row>
+							<entry morerows="2">
+							type</entry>
+							<entry namest="col_val" nameend="col_info" >
+							Type von Task.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>support</literal></entry>
+							<entry>
+							Support Block von Therapie in Therapieschema.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>gcsf</literal></entry>
+							<entry>
+							Block für halbautomatische verwendung 
+								Medikamenten für Granuloziten Wachstum.
+							</entry>
+						</row>
+						<!-- expr -->
+						<row>
+							<entry morerows="10">expr</entry>
+							<entry namest="col_att" nameend="col_info" >
+							Ausdruck Element für definition von anruf hochspezifizierte1 
+							Methoden
+							und 
+							Regeln.
+							Bedeutung von Elementen ist abhangig von Attributen Werten.
+							</entry>
+						</row>
+						<row>
+							<entry>expr</entry>
+							<entry namest="col_val" nameend="col_info" >
+								Ausdruckname.
+							</entry>
+						</row>
+						<row>
+							<entry>type</entry>
+							<entry namest="col_val" nameend="col_info" >
+								Ausdrucktype.
+							</entry>
+						</row>
+						<row>
+							<entry>value</entry>
+							<entry namest="col_val" nameend="col_info" >
+								Ausdruckvalue.
+							</entry>
+						</row>
+						<!-- ifRule -->
+						<row>
+							<entry namest="col_att" nameend="col_info" >
+								<literal>ifRule</literal>
+								-- Begin der Regel.
+							</entry>
+						</row>
+						<row>
+							<entry>expr</entry>
+							<entry><literal>if</literal></entry>
+							<entry>
+								Begin der Regel.
+								<literal>ifRule</literal>
+							</entry>
+						</row>
+						<row>
+							<entry>type</entry>
+							<entry><literal>1|2</literal></entry>
+							<entry>
+								<literal>Reserwiert</literal>
+								1 - automatische, 2 - halbautomatische bearbeitung 
+								des Regels. 
+							</entry>
+						</row>
+						<!-- thenElse -->
+						<row>
+							<entry namest="col_att" nameend="col_info" >
+								<literal>thenElse</literal>
+								-- then|else Konstruktion in  Regel.
+							</entry>
+						</row>
+						<row>
+							<entry>expr</entry>
+							<entry><literal>then|else</literal></entry>
+							<entry>
+								Entschedung Teil von Regeln.
+							</entry>
+						</row>
+						<!-- equalityExpr -->
+						<row>
+							<entry namest="col_att" nameend="col_info" >
+								<literal>equalityExpr</literal>
+								-- Vergleich Konstruktion in  Regel.
+							</entry>
+						</row>
+						<row>
+							<entry>expr</entry>
+							<entry><literal>equality</literal></entry>
+							<entry>
+								Vergleich Ausdruck.
+							</entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</table>
+			
+			<table frame='all'>
+				<title>MeTaL Elementen und ihre Zusammenhang</title>
+				<tgroup cols="4	">
+					<colspec colname="col_el"/>
+					<colspec colname="col_0n" colwidth="1em"/>
+					<colspec colname="col_child" colwidth="10em"/>
+					<colspec colname="col_info"/>
+					<thead>
+						<row> <entry>Element</entry> <entry>n</entry> <entry>Child</entry> <entry>Info</entry> </row>
+					</thead>
+					<tbody>
+						<!-- concept document -->
+						<row>
+							<entry morerows="3">protocol</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Therapieprotokol oder Therapikoncept Dokument.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>1</literal></entry>
+							<entry>definition</entry>
+							<entry>Platzhalter für definition Protokol innere Elementen</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>task</entry>
+							<entry>In Workflow verwendete Therapieschemata.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>choice</entry>
+							<entry>Auswahlblock für Protokol-Workflow Block.</entry>
+						</row>
+						<!-- choice -->
+						<row>
+							<entry morerows="1">choice</entry>
+							<entry namest="col_0n" nameend="col_info" >
+							Auswahlblock für Protokol-Workflow Block.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>1-n</literal></entry>
+							<entry>studyarm</entry>
+							<entry>Ein Arm.</entry>
+						</row>
+						<!-- studyarm -->
+						<row>
+							<entry morerows="1">studyarm</entry>
+							<entry namest="col_0n" nameend="col_info" >
+							Ein Arm in Auswahlblock.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>task</entry>
+							<entry>In Workflow verwendete Therapieschemata.</entry>
+						</row>
+						<!-- task document -->
+						<row>
+							<entry morerows="4">task</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Therapieschema Dokument.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>drug</entry>
+							<entry>Medikament verwendung in Therapieschema-Dokument oder Block.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>labor</entry>
+							<entry>Labor definition in Ramen vorläufieger Element.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>notice</entry>
+							<entry>Textuelle typisierte Beschreibung Kontext unabhängige Information.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>task</entry>
+							<entry>Block</entry>
+						</row>
+						<!-- task block -->
+						<row>
+							<entry morerows="1">task</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Block von verschiedenen einzelnen medizinischen aufgaben.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>drug</entry>
+							<entry>Medikament definition in Ramen des Blocks.</entry>
+						</row>
+						<!-- drug in task-->
+						<row>
+							<entry morerows="5">drug</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Medikament verwendung in Therapieschema.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>1</literal></entry>
+							<entry>dose</entry>
+							<entry>Definition von Dosis für bestimte Medikament</entry>
+						</row>
+						<row>
+							<entry><literal>1-n</literal></entry>
+							<entry>day</entry>
+							<entry>Tage Definition für bestimte Medikament</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>notice</entry>
+							<entry>Bemerkungen zu Verwendung von Medikament</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>expr</entry>
+							<entry>Regeln oder Funktion Anruf in bezug zum oberste Element.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>drug</entry>
+							<entry>Tregerlösung oder Zusatzmedikament.</entry>
+						</row>
+						<!-- drug in drug -->
+						<row>
+							<entry morerows="3">drug</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Medikament in Medikament hat seine bedeutung als
+								Tregerlösung oder Zusatzmedikament.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>1</literal></entry>
+							<entry>dose</entry>
+							<entry>Definition von Dosis für bestimte Medikament</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>expr</entry>
+							<entry>Regeln oder Funktion Anruf in bezug zum oberste Element.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>notice</entry>
+							<entry>Bemerkungen zu Verwendung von Medikament</entry>
+						</row>
+						<!-- drug document-->
+						<row>
+							<entry morerows="2">drug</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Medikament Dokument.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>dose</entry>
+							<entry>Offt verwendete Dosen von diese Medikament</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>task</entry>
+							<entry>Offt verwendete Therapieblocke für diese Medikament</entry>
+						</row>
+						<!-- day -->
+						<row>
+							<entry morerows="3">day</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Tage Definition in Medikament oder andere einzelnes Aufgabe.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>1</literal></entry>
+							<entry>times.<footnote id="notChild">
+								<para>
+								"." bedeutet das dieser Element keine Child-Elementen hat.
+								</para>
+								</footnote>
+							</entry>
+							<entry>Definition von Uhrzeit für oben Definierte Tage. Kann behalten Absolute und Relative Werte.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>notice.</entry>
+							<entry>Bemerkung zum Tages Definition</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>expr</entry>
+							<entry>Regeln oder Funktion Anruf für bearbeitung oberste Element.</entry>
+						</row>
+						<!-- times -->
+						<row>
+							<entry>times.</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Uhrzeit Definition in Medikament oder andere einzelnes Aufgabe.
+							</entry>
+						</row>
+						<!-- notice -->
+						<row>
+							<entry>notice</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Komentare und Bemerkungen für verschidene Teilen des MTL-Dokumentes.
+							</entry>
+						</row>
+						<!-- expr -->
+						<row>
+							<entry morerows="2">expr</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Tage Definition in Medikament oder andere einzelnes Aufgabe.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>expr</entry>
+							<entry>Innere Element die Regeln Konstruktion.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>dose.<footnoteref linkend="notChild"/></entry>
+							<entry>Vordefinierte Dosis-Parameter in Regeln oder Funktion.</entry>
+						</row>
+						<!-- dose -->
+						<row>
+							<entry morerows="2">dose</entry>
+							<entry namest="col_0n" nameend="col_info" >
+								Dosis des Medikaments.
+							</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>expr</entry>
+							<entry>Dosis Regeln oder Funktion.</entry>
+						</row>
+						<row>
+							<entry><literal>0-n</literal></entry>
+							<entry>notice.</entry>
+							<entry>Dosis Kommentare.</entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</table>
+			
+			
+		</para>
+		
+	</chapter>
+	<chapter id="chUi" xreflabel="User Interface"><title>MOPET User Interface </title>
+	<!-- 
+	<titleabbrev id="chUiTine">User Interface</titleabbrev>
+	 -->
+		<section>
+			<title>
+			Vorstellung
+			</title>
+			<para>
+			Alle Seiten in Programm wird in zwei Gruppen geteilt Dokumenten und Listen von Dokumenten.
+			So gibts 7 wichtigsten Seitentypen.
+				<orderedlist>
+					<listitem>
+						<para><literal>explorer</literal> -- Analog Datei-Explorer in Windows oder Nautilus in GNOME. 
+						Zegt Liste von so genante MOPET Dateien wie 
+						Konzept oder Protokol, Therapieschema, Patientdokument,
+						Medikamentdokument. 
+						</para>
+					</listitem>
+					<listitem>
+						<para><literal>concept</literal> -- Konzept- oder Protokoldokument. Samlung von Therapieschemata eine 
+						Therapiekonzept oder ein klinische Studien Protokol.
+						</para>
+					</listitem>
+					<listitem>
+						<para><literal>schema</literal> -- Therapieschema - der Hauptdokument das ganzes MOPET-Programm.
+						Es ist samlung von Medikamenten von eine bekante Therapiestandart mit
+						Chemopreparaten und andere nötige Medikamenten.
+						</para>
+					</listitem>
+					<listitem>
+						<para><literal>patient</literal> -- History von Ablauf Patientenbehandlung in MOPET. 
+						Enthaltet information Wann und welche Therapiekonzept und Therapieschema war benutzt für 
+						diese Patient.
+						Gleichzeitig Befunde, Labordaten, Notizen und 
+						Info über die verwendete Therapiestandart modifikation. 
+						Für befandlung verwendete Konzepte und Therapieschemata wird als Patientdokument innere Dokumente
+						gespeichert.
+						</para>
+					</listitem>
+					<listitem>
+						<para><literal>drug</literal> -- Medikamentdokument. Samlung von Therapierelevente Medikamentinfo, 
+						oft verwendete Medikament vorschreiben, erlaubte Maximal Dosis und kummulative Maximal Dosis.
+						Dise information wird für einbau eines Therapieschema benutzt. 
+						 </para>
+					</listitem>
+					<listitem>
+						<para><literal>institute</literal> 
+						-- Platz für definition Abteilung spezifische Konfiguration.
+						</para>
+					</listitem>
+					<listitem>
+						<para><literal>user</literal> -- MOPET-Benutzer persönliche einschtelung Seite.</para>
+					</listitem>
+				</orderedlist>
+			</para>
+			<para>
+			MOPET User Interface (MOPETUI) realisiert durch interactive Web-Site.
+			Verwendete Technologie: JSPX, 
+			<ulink url="http://tiles.apache.org/">Apache-Tiles</ulink>, 
+			<ulink url="http://dojotoolkit.org/">Dojo-Toolkit</ulink>
+			 und 
+			Spring Web Flow (<ulink url="http://www.springsource.org/spring-web-flow" >SWF</ulink>).
+			</para>
+		</section>
+		<section>
+			<title>URI Prinzipien.</title>
+			<para>
+				In MOPET URI wird verwendet REST Stile, Abfrage (query) Teil.
+				Mit REST Stiele ist gebaut mit Sitentype-Name "=" oder "-" Symbol und ID. 
+				Die Kompliezierte Siten wie Therpieschema haben noch Sichtname dazwieschen. 
+				Zum Beispiel.
+				<!-- 
+				<orderedlist numeration="upperroman">
+				 -->
+				<orderedlist>
+					<listitem>
+						<para>
+							<literal>.../explorer=1264533</literal>
+							-- ist ein Referenz zum bestimmten Dateiverzeichnis in MOPET.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<literal>.../concept=1395888</literal>
+							-- ist Adresse AC (adjuvant) Therapiekonzept in oncoworkstation.de Seite.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<literal>.../schema=1395890</literal>
+							-- ist Adresse Doxorubicin/Cyclophosphamid (AC) (adjuvant) Therapieschema 
+							in gleiche Therapiekonzept. Viel offter diese URI wird mit Sichtmodus-Abkurzung benutzt.
+							<orderedlist numeration="loweralpha" inheritnum="inherit">
+								<listitem>
+									<simpara>
+										<literal>.../schema-ed-1395890</literal>
+										-- Therapieschema Medikamentliste Sichtmodus.
+									</simpara>
+								</listitem>
+								<listitem>
+									<simpara>
+										<literal>.../schema-plan-1395890</literal>
+										-- Therapieschema "Chemo-Ablaufplan chronologisch" Sichtmodus.
+									</simpara>
+								</listitem>
+								<listitem>
+									<simpara>
+										<literal>.../schema-info-1395890</literal>
+										-- Therapieschema "Therapiemanagement-Info" Sichtmodus.
+									</simpara>
+								</listitem>
+							</orderedlist>
+							Zahl von Sichtmodusen kann nach wunsch den Kliniken variiren. 
+						</para>
+					</listitem>
+				</orderedlist>
+			</para>
+			<para>
+				URI Abfrage. In MOPET wird folgende URI Abfrage String Schlussel (Query String Keys) verwendet.
+				<orderedlist>
+					<listitem>
+						<simpara>
+							<literal>a</literal>
+							-- Aktion oder Name von Befehl welche rufft verschiedene Dialogen und
+							 wird in mehrere Bereiche des Programm wieder Verwendet.
+						</simpara>
+					</listitem>
+					<listitem>
+						<simpara>
+							<literal>idc</literal>
+							-- Kopie Identifer. Zeigt welche Element sol kopiert werden.
+						</simpara>
+					</listitem>
+					<listitem>
+						<simpara>
+							<literal>idt</literal>
+							-- Target Identifer. Zeigt welche Element sol verarbeitet werden. 
+						</simpara>
+					</listitem>
+				</orderedlist>
+			</para>
+		</section>
+		<section>
+			<title>Interface</title>
+			<para>
+			Die MOPET-Seite allgemein ist geteilt zum zwei Teile, linke und rechte.
+			Linke Teil enthält die Inhalte des Seites selbst, 
+			rechte Teil ist Platz für Interaction Dialoge, Menü, Linken zum mögliche Sichtmodi
+			und zusatzliche Information.
+			Rechte Teil heist <literal>Workpanel</literal> und ist unscrollbar.
+			Linke Teil heist <literal>Contentpanel</literal> ist CSS so eingerichtet das nur sie wird ausgedruckt.
+			</para> 
+			<section><title>Workpanel</title>
+				<para>
+				Workpanel hat drei feste nacheinander liegende Teilen:
+				<orderedlist>
+					<listitem>
+						<simpara> <literal>Toolboard</literal> welcher selbst hat genau so drei Teilen. </simpara>
+						<orderedlist>
+							<listitem>
+								<simpara><literal>Menü</literal> </simpara>
+							</listitem>
+							<listitem>
+								<simpara><literal>Neue laden</literal> 
+								-- Loaded Dokument neue von DB. </simpara>
+							</listitem>
+							<listitem>
+								<simpara> <literal> Speichern</literal> -- 
+								Viele enderungen in Dokumenten benutzen mehrere Dialogen 
+								und müßen früher oder später in DB gespeichert werden.
+								</simpara>
+							</listitem>
+						</orderedlist>
+					</listitem>
+					<listitem>
+						<simpara><literal>Dialog Panel</literal></simpara>
+					</listitem>
+					<listitem>
+						<simpara><literal>Sichtmodus</literal></simpara>
+					</listitem>
+				</orderedlist>
+				</para>
+				<section><title>Menü</title>
+				<para>
+				Menü für allen Seiten ist mit 
+				<link linkend="owsui_docToolbar">owsui:docToolbar</link>
+				Tag gebaut.
+				</para>
+				</section>
+			</section>
+		</section>
+		<section><title>Interaction</title>
+			<para>Benutzer - Programm Interaktion meistens passiert gurch 
+			anruf SWF <literal>view-state</literal> mit hilfe URL key <literal>a</literal>.
+			Angerufene SWF <literal>view-state</literal> wird erschein in Dialogbereich Workpanel.
+			</para>
+		<section><title>MOPET SWF einbau Prinzip.</title>
+			<para>
+				Der MOPET SWF Prinzip ist gebaut mit gedanke 
+				enliche möglichkeit anbieten welche normale Text Editor Anbitet. 
+				Gemeint war einprogramieren die Möglichkeit belibiege Zahl belibiege änderungen in belibiege reinfolge
+				in Dokument zu machen und Speichern am ende.
+			</para>
+			<para>
+				Realisiert ist diese Idee mit Hilfe
+				<literal><![CDATA[<view-state>]]></literal>
+				genant <literal>${docName}ViewAndEdit</literal> 
+				z.B. <literal>schemaxViewAndEdit</literal> an die Mitte
+				und grei
+				<literal><![CDATA[<action-state>]]></literal>
+				<literal>handleAction</literal>, <literal>createEditObject</literal> und
+				<literal>reviseEditNode</literal>.
+				Bearbeitung Reinfolge für eine Iteration ist volgendes,
+				zuerst wird in 
+				<literal>handleAction</literal> die Aktion erkennt
+				dann in <literal>createEditObject</literal> Edit-Element gebaut
+				und <literal><![CDATA[<view-state id="${docName}ViewAndEdit">]]></literal> gestartet 
+				nachdem geht ablauf zum <literal>reviseEditNode</literal> und wieder von Anfang .
+				Die Iteration wird <literal>1-n</literal> mal passieren.
+				Bis anruf <literal>event</literal> Speichern oder anruf solche Aktion welche macht speichern 
+				selbst automatisch. 
+			</para>
+			<para>
+				Einige Details zum MOPET SWF states:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<literal>handleAction</literal>
+							-- Welche Aktion soll genau passieren steht in URL key <literal>a</literal>
+							oder wird in z.B. <ulink 
+							url="../apidocs/com/qwit/service/HandleAction.html#handleAction(com.qwit.model.SchemaMtl)"
+							>handleAction.handleAction(SchemaMtl docMtl)</ulink>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<literal>createEditObject</literal>
+							-- Baut nötige Java Object welcher wird in Browser bearbeitet z.B. 
+							<ulink url="../apidocs/com/qwit/model/SchemaMtl.html#openEditDose()">schemaMtl.openEditDose()</ulink>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<literal>schemaViewAndEdit, drugViewAndEdit...</literal>
+							-- Baut und kontroliert änderungen Zustand zwischen Browser und Server
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<literal>reviseEditNode</literal>
+							-- Liefert neue parameters von änderung object zum echte <literal>entity</literal> object.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				Diese Teil des Program Blebt trotzdem fehlerreich.
+			</para>
+		</section>
+		<section><title>Dialogen oder Aktionen in verschiedenen Seitentypen.</title>
+			<para>Jede Seitentype hat eigene samlung verschedene Dialogen welche zu entsprechende Seite passt.
+			</para>
+			<section><title>Explorer Dialoge</title>
+				<para>Explorer Dialoge anbieten neu Datei anlegen, 
+				entsprechend Bereich wo wir gerade befinden sich.
+				</para>
+				<section><title>newTreeNode</title>
+					<para>
+						Legt neu Verzeichnis an.
+					</para>
+					<para>
+<ulink url="../apidocs/com/qwit/service/ExplorerService.html#newFolder(com.qwit.model.ExplorerMtl, java.lang.Integer, java.lang.String)">
+	explorerService.newFolder(explorerMtl,flowObjCreator.idf,flowObjCreator.folder)
+</ulink>
+					</para>
+					<para>
+						Einfache Operation.
+						Baut zwei Entity Objecten,
+						<programlisting>
+Tree newFolderT = new Tree();
+...
+Folder newFolderO = new Folder();
+...
+<ulink url="../apidocs/com/qwit/service/MtlDbService.html#folder2noderole(java.lang.String, com.qwit.domain.Folder)">
+folder2noderole(userName, newFolderO);
+</ulink>
+						</programlisting>
+						legt sie DB ein und setzt Zugangsrechte. Eigentümer ist eingelogte Benutzer. 
+					</para>
+				</section>
+				<section><title>newProtocol</title>
+					<para>
+						Neue Protokol anlegen.
+					</para>
+					<para>
+						Der Button an Workpanel und Menuitem rufen die selbe 
+						Aktion an.
+					</para>
+				</section>
+			</section>
+			<section><title>Therpaie oder Konzept-Protokol änderungen Aktionen.</title>
+				<para>
+					In Therpieprotokol wird Therapie workflow definiert,
+					eine oder mehrere Therpeischema mit siene Varianten eingebaut.
+				</para>
+				<section><title>newSchema</title>
+					<para>
+						Definiert neue Therapieschema in eintspechende Therapieprotokol.
+						Funktion hat zwei anrufe - Link in Workpanel und Menuitem.
+					</para>
+					<para>
+					Aktion <literal>newSchema</literal> erstehlt neu <literal>task mtl-knote</literal>
+					in <literal>definition</literal> bereich.
+<programlisting><![CDATA[
+<protocol id="1465843" sort="-1344855275014" idclass="1465843" 
+	mdate="2012-08-13 12:54:35.014" idauthor="14346">
+	protocol:1465843:protocol:Concept1:protocolvar::protocoltype:clinic:
+	phase:null:prospective:null:randomized:null:expansion:null:indication:null:
+	infostatus:work:intention::status:null:studynumber:null:longname:null
+	<definition id="1465844" sort="1344855275023">
+		<task id="1465845" sort="-1344855953129" idclass="1465845" 
+				mdate="2012-08-13 13:05:53.129" idauthor="14346">
+			task:1465845:task:Schema123:taskvar::outpatient:null:
+			type:chemo:duration:14:Cyclename:1465845
+		</task>
+	</definition>
+	...
+</protocol>
+]]></programlisting>
+					</para>
+				</section>
+				<section><title>newChoose</title>
+					<para>
+						Definiert neue Verzweigung mit ein Arm in Workflow Bereich.
+					</para>
+<programlisting><![CDATA[
+<protocol>
+...
+	<choice id="1465849" sort="1344857732418">
+		<studyarm id="1465850" sort="1344857732419" idclass="1465853">
+			arm:1465853:arm:Arm1
+		</studyarm>
+	</choice>
+</protocol>
+]]></programlisting>
+				</section>
+				<section><title>armName</title>
+					<para>
+						Ändert Armname, anrufbar von Contextmenu.
+					</para>
+				</section>
+				<section><title>Contextmenu</title>
+					<section><title>delete</title>
+						<para>
+							Löschen Aktion geht wie für Therapieschema in 
+							Workflow bereich, genau so für Definition bereich.
+							In Definition bereich Therpaieschema ist löschbar nur dann wen sie 
+							in Workflow oder bei Patient sind nicht benutzt.
+						</para>
+						<para>
+							Algemein löschbar ist jeder element welcher hat Contextmenu bei rechte Mausklick.
+						</para>
+					</section>
+				</section>
+			</section>
+			<section><title>Therapieschema änderungen Aktionen.</title>
+				<para>
+					Therapieschema ist am meistens entwickelte MOPET Dokument 
+					und er hat folgende Funktionen.
+					<!-- 
+					Therapieschema Editor hat folgende Funktionen.
+					 -->
+				</para>
+				
+				<section><title>newDrug</title>
+					<para>
+					Hinzufügt neue Medikament in Dokument.
+					Das ist eine feste Konstruktion 
+					welche besteht von 
+					<literal>drug mtl-knode</literal>
+					mit 
+					<literal> dose</literal>
+					und
+					<literal> day/times mtl-knode</literal>.
+<programlisting><![CDATA[
+<task id="1465845" sort="-1344861230621" idclass="1465845" 
+		mdate="2012-08-13 14:33:50.621" idauthor="14346">
+	task:1465845:task:Schema123:taskvar::outpatient:null:
+	type:chemo:duration:14:Cyclename:1465845
+	<drug id="1465859" sort="-1344861230506" idclass="12193" 
+			mdate="2012-08-13 14:33:50.506" idauthor="14346">
+		Dexamethason/Dexamethason drug:12193:idgeneric:12193
+		<dose id="1465860" sort="1"/>
+		<day id="1465861" sort="2">
+			<times id="1465862" sort="1"/>
+		</day>
+	</drug>
+	<task id="1465846" sort="1344855275032" idclass="1280058">
+		task:1280058:task:support:
+	</task>
+</task>
+]]></programlisting>
+					</para>
+					<para>
+					Arbeitet zusammen nur mit <literal>idt</literal> URI Keys.
+					Wenn idt=idDoc wird ein Zytostatikum hinzufügt.
+					Wenn idt=id von SupportBlock wird ein Supportmedikament hinzufügt.
+					</para>
+				</section>
+				<section><title>newOnDemandDrug</title>
+					<para>
+					Ein besondere Fall von Support-Medikament hinzufügen.
+					Hier neu gegebene Support-Medikament wird gleich 
+					Bedarf-Medikament gemacht (ref. to bedarf drug)
+					</para>
+				</section>
+				<section><title>newAdditionalDrug</title>
+					<para>
+					Macht neue Zusatzmedikament.
+					Besonderes in ihn ist das das er kein eigenes <literal>day</literal>
+					Pflicht Tag brauchst sondern nur <literal>dose</literal>
+					und selbst liegt in andere <literal>drug</literal> Tag. 
+					</para>
+				</section>
+				<para>
+				Weil 
+				<literal>dose mtl-knode</literal>
+				erste 
+				<literal>day</literal>
+				und
+				<literal>times mtl-knode</literal>
+				kommen automatisch mit Medikament und sind nicht löschbar,
+				haben sie keine eigene hinzufügen Befehl,
+				nur änderung Befehl.
+				Das bedeutet das wird kein <literal>a</literal> URI-Key verwendet,
+				nur <literal>idt</literal> key und von Name des editbares Tag erkennt 
+				Programm welche Dialog soll eröffnet werden. 
+				</para>
+				
+				<section><title>editDose (idt)</title>
+					<para>
+						Ändert Dosis element.
+						Braucht kein <literal>a</literal> URI Keys,
+						wird erkennt als 
+						<literal>mtl-knode</literal>
+						von Type 
+						<literal>dose</literal>
+						aus <literal>idt</literal>. 
+					</para>
+					<para>
+						<itemizedlist>
+							<listitem>
+								<para>
+									SWF
+									<itemizedlist>
+										<listitem>
+											<para>Anruff Enbau von Dosis änderungen Object 
+											<ulink url="../apidocs/com/qwit/model/SchemaMtl.html#openEditDose()">schemaMtl.openEditDose()</ulink>
+												in <filename>WEB-INF/tags/schemaflow/schemaflow-flow.xml</filename>.
+											</para>
+										</listitem>
+									</itemizedlist>
+								</para>
+							</listitem>
+							<listitem>
+								<para>
+								JSP
+									<itemizedlist>
+										<listitem>
+											<para>Anruff <literal><![CDATA[
+												<edit:dose/>
+												]]></literal> in 
+						<filename>WEB-INF/tags/edit/panel.tagx</filename>.
+											</para>
+										</listitem>
+									</itemizedlist>
+								</para>
+							</listitem>
+						</itemizedlist>
+					</para>
+				</section>
+				<section><title>editDay (idt)</title>
+					<para>
+						Ändert Tage Definition für Medikament.
+					</para>
+					<para>
+					Dialog ist sehr komplex und besteht von mehreren Besteibung Typen.
+					<itemizedlist>
+						<listitem>
+							<para>
+								<literal>Absolut</literal>
+								z.b. 1,3,5 Tag
+							</para>
+						</listitem>
+						<listitem>
+							<para>
+								<literal>Periodisch</literal>
+								z.b. 1-4 Tage
+							</para>
+						</listitem>
+						<listitem>
+							<para>
+								<literal>Wochentlich</literal>
+								z.b. Mo,Dr
+							</para>
+						</listitem>
+					</itemizedlist>
+					</para>
+				</section>
+				<section><title>editTimes (idt)</title>
+					Uhrzeit besreibung Dialog hat folgende Typen von Definition.
+					<itemizedlist>
+						<listitem>
+							<para>
+								<literal>Chronologische Reihenfolge</literal>
+								Sehr nötige und praktische Definition von Uhrzeit.
+								Besreibt Relative Zeit Definition von andere Medikament.
+							</para>
+						</listitem>
+						<listitem>
+							<para>
+								<literal>Freie Zeit Eingabe</literal>
+								mit anderen Worten keine Vordefinierte Zeit Eingabe.
+							</para>
+						</listitem>
+						<listitem>
+							<para>
+								<literal>Absolut</literal>
+								Tages Uhrzeit
+								z.b. 09:00, 12:00
+							</para>
+						</listitem>
+						<listitem>
+							<para>
+								<literal>Mahlzeiten</literal>
+								Tableten tradizionehle Eingabe verbunden mit Mahlzeit.
+							</para>
+						</listitem>
+					</itemizedlist>
+				</section>
+				<section><title>newBlockGcsf</title>
+					<para>
+					Macht lehre <literal>task mtl-knode</literal>
+					von type <literal>gcsf</literal>
+					als neue Therapieblock für zuckunftige auswahl GCSF-Medikamenten
+					bei Schema verwendung.
+					</para>
+					<para>
+						<literal><![CDATA[<owsui:menuItemLinkClick idt="${blockId}" id="newBlockGcsf"/>]]></literal>
+						in <filename>docToolbar.tagx</filename> macht Menuitem,
+						Java bereich dafür ist
+						<literal>documentService.initTaskInsideDrug(schemaMtl,'task','gcsf')</literal>
+						angerufen von <filename>schemaflow-flow.xml</filename>.
+						In JSP-Tag <filename>schemaTaskList</filename>
+						wird etsprechende Block erkent und gezeigt.
+					</para>
+				</section>
+				<section><title>Änderungen in Patient-Therapieschema.</title>
+					<section><title>addGcsf</title>
+						<para>
+						Hinzufügt neu Block vorbereitete GCSF-Medikamenten in Therapieschema.
+							Die Actionname <literal>addGcsf</literal>
+							ist in alle Teilen des Programm wiederverwendet, in SWF, Java unt JSPX/TAGX Dateien.
+						</para>
+					</section>
+					<section><title>chemoDoseMod</title>
+						<para>
+						Modifikation die Dose von Zytostatika.
+						</para>
+						<para>
+						Anbietet möglichkeit drei verschiedene Dosis Modifikation.
+						Benutzer kann
+						Prozent von definierte Dosis sreiben,
+						definierte Dosis endern oder
+						berechnete Dosis ändern.
+						Die gegebene änderungen soll begründen werden.
+						</para>
+						<para>
+							<itemizedlist>
+								<listitem>
+									<para>
+										<literal>edit:chemoDoseMod</literal>
+										-- ruff Dialog an.
+									</para>
+								</listitem>
+							</itemizedlist>
+						</para>
+					</section>
+				</section>
+			</section>
+			<section><title>Medikament änderungen Aktionen.</title>
+				<para>
+					<itemizedlist>
+						<listitem>
+							<para><literal>newBlock</literal>
+							-- Erstehlt neue Therapieblock als praktische Verwendungsfall in Medikament Dokument.
+							</para>
+						</listitem>
+						<listitem>
+							<para><literal>newBlockGcsf</literal>
+							-- Erstehlt neue Therapieblock Datentyp "GCSF". 
+							Wird Verwendet für schnele erweiterung Therapieschema mit Therapieblock von selben Datentyp.
+							</para>
+						</listitem>
+					</itemizedlist>
+				</para>
+				<section id="summeDoseExpr"><title>summeDoseExpr</title>
+					<para>
+						In diesem Dialog wird wird zwei verschiedene Max Dosis eingetragen,
+						 Einzelne und Kummulative. 
+						 Einzelne Max Dosis wird von diese Sthele gelesen
+						 und bei verwendung jede Therapieschema, 
+						 mit diese Medikament, benutzt. 
+					</para>
+					<para>
+					Zusatzliche Info:
+						<itemizedlist>
+							<listitem>
+								<para>
+									Verbunden mit Noticen type <literal>totalsdose</literal>
+								</para>
+							</listitem>
+							<listitem>
+								<para>i18n --
+									<literal>
+									mtl_expr_value_maxDoseCumulative
+									</literal>
+								</para>
+							</listitem>
+							<listitem>
+								<para>
+									<literal>
+									edit:summeDoseExpr
+									</literal>
+									-- Edit Dialog TAGs.
+								</para>
+							</listitem>
+							<listitem>
+								<para>
+									<literal>
+									mtl:maxDose
+									</literal>
+									-- View Dialog TAGs.
+								</para>
+							</listitem>
+						</itemizedlist>
+					</para>
+					<para>
+					JavaDoc: 
+					<ulink url="../apidocs/com/qwit/service/DrugService.html#summeDoseEntry(com.qwit.model.DrugMtl)">drugService.summeDoseEntry(com.qwit.model.DrugMtl)</ulink>,
+					<ulink url="../apidocs/com/qwit/service/DrugService.html#summeDoseSave(com.qwit.model.DrugMtl)">drugService.summeDoseSave(com.qwit.model.DrugMtl)</ulink>
+					</para>
+				</section>
+				<section><title>newBlock</title>
+					<para>
+					<orderedlist numeration="loweralpha">
+						<listitem>
+						<para><literal><![CDATA[
+							<owsui:menuItemLinkClick idt="${blockId}" id="newBlock"/>
+							]]>
+						</literal>
+						-- MenuItem für NewBlock in <filename>WEB-INF/tags/owsui/docToolbar.tagx</filename>.
+						</para>
+						</listitem>
+						<listitem>
+						<para>
+							<literal>
+							&lt;evaluate expression="<ulink url="../apidocs/com/qwit/service/DocumentService.html#initTaskInsideDrug(com.qwit.model.DrugMtl, java.lang.String, java.lang.String)">documentService.initTaskInsideDrug(drugMtl,'drug','inside')</ulink>"/&gt;
+							</literal>
+							-- Initialisierung anruf in drugflow action-state - handleAction.
+						</para>
+						</listitem>
+					</orderedlist>
+					</para>
+				</section>
+				<section><title>newBlockGcsf</title>
+					<para>
+					<orderedlist numeration="loweralpha">
+						<listitem>
+						<para><literal>
+							&lt;owsui:menuItemLinkClick idt="${blockId}" id="newBlockGcsf"/&gt;
+						</literal>
+						-- MenuItem für NewBlockGcsf.
+						</para>
+						</listitem>
+						<listitem>
+						<para>
+							<literal>
+							&lt;evaluate expression="documentService.initTaskInsideDrug(drugMtl,'drug','gcsf')"/&gt;
+							</literal>
+							-- Initialisierung anruf in drugflow action-state - handleAction.
+						</para>
+						</listitem>
+					</orderedlist>
+					</para>
+				</section>
+			</section>
+		</section>
+		</section>
+	</chapter>
+	<chapter id="chCore"><title>Core</title>
+	<titleabbrev id="chCoreTine">Core</titleabbrev>
+		<para>
+			Alle Java classen in MOPET sind Grundsätzlich auf drei Gruppen geteilt. 
+			<orderedlist>
+				<listitem>
+					<para>
+						<literal>@Controller</literal>
+						-- Classen sind für HTTP Request und REST Erkennung verantwortlich
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<literal>@Service</literal>
+						-- Classen sind für einbau von Model-Objecten zustandig.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<literal>model</literal>
+						-- ist Java-Objecten welche inhalten die ganze Information 
+						von bestimten MeTaL Dokumenten und haben nötigge Methoden um 
+						sie zu bearbeiten.
+					</para>
+				</listitem>
+			</orderedlist>
+		</para>
+		<para>
+			Eine separate Gruppe von Java-Classen sind die 
+			<ulink url="../apidocs/com/qwit/service/package-summary.html">Creator</ulink>
+			 Classen.
+			Sie einbauen, lesen und ändern die nötige MeTaL Objecte und Dokument-Komponenten
+			in DB.
+		</para>
+		<section><title>Service</title>
+			<section><title>DocumentService</title>
+				<para>
+					In <literal>DocumentService</literal>
+					wird MOPET-Dokumenten und ihre Komponenten gebaut.
+					Hier wird solche Java-Objecten wie 
+					<literal>SchemaMtl</literal>,
+					<literal>DrugMtl</literal>...
+					erstehlt.
+				</para>
+			</section>
+			<section><title>DeleteService</title>
+				<para>
+					Ein Service für löschen, <literal>mtl-knoden</literal>
+					in verschiedene <literal>mtl-dokumenten</literal>.
+				</para>
+			</section>
+			<section><title>HandleAction</title>
+				<para>
+					Dieser Service 
+					erkennt Actionen
+					für <literal><![CDATA[<action-state id="handleAction">]]></literal>
+					In SWF-Definition verschiedene MOPET-Dokumenten Editoren.
+					Er nimmt als Attributen 
+				</para>
+			</section>
+		</section>
+	</chapter>
+	<chapter id="chDb"><title>DB Tier</title>
+	<titleabbrev id="chDbTine">DB Tier</titleabbrev>
+		<para>
+			MOPET DB Strucktur realiesiert der Bedarf von MeTaL.
+		</para>
+		<para>
+			Die Realisierung 
+			von MeTaL-Dokument-Paradigm und Datastrucktur-Hierarchie
+			übernimt TREE Tabelle und seine Instance in Java 
+			<ulink url="../apidocs/com/qwit/domain/Tree.html">Tree</ulink>
+			Class. 
+			Die Zeilen von TREE Table  treten dann als
+			<literal>mtl-node</literal> in 
+			<literal>mtl-document</literal> auf.
+						Die Medizinische Begriefe 
+			(<literal>mtl-objekten</literal> oder <literal>mtlO</literal>)
+			sind in Tabelle mit entspechende Name gespeichert.
+			z.B. Drug, Dose, Day, Times ...
+		</para>
+		<para>
+			<table>
+				<title>Besreibung TREE Tabelle</title>
+				<tgroup cols="2">
+					<thead>
+						<row>
+							<entry>Feld</entry>
+							<entry>Bestimmung</entry>
+							<entry>Erklerung</entry>
+						</row>
+					</thead>
+					<tbody>
+						<row>
+							<entry>id</entry>
+							<entry>Primary key.</entry>
+							<entry>Identifikation Nummer.</entry>
+						</row>
+						<row>
+							<entry>did</entry>
+							<entry>dad-id or parent-id</entry>
+							<entry>
+							Reference zum Father Element 
+							in so genente Baum Hierarhie.
+							</entry>
+						</row>
+						<row>
+							<entry>idclass</entry>
+							<entry>class-id</entry>
+							<entry>Reference zum Definition von 
+								<literal>mtlO</literal>
+							</entry>
+						</row>
+						<row>
+							<entry>ref</entry>
+							<entry>reference-id</entry>
+							<entry>Reference zum andere 
+								<literal>mtl-node</literal>
+								in diese oder andere Dokument.
+								Wird verwendet um ausziehen
+								für dise Knode nötige Information von andere Teil 
+								von Dokument.
+							</entry>
+						</row>
+						<row>
+							<entry>iddoc</entry>
+							<entry>document-id</entry>
+							<entry>Reference zum Definition von 
+								<literal>mtl-document</literal>
+							</entry>
+						</row>
+						<row>
+							<entry>tab_name</entry>
+							<entry>Table Name oder <literal>mtl-tag</literal> Name</entry>
+							<entry>
+								Name der Tablles zu welche
+								<literal>idclass</literal>
+								macht seine Reference.
+							</entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</table>
+		</para>
+		<para>
+		Jede <literal>mtl-node</literal> kann Verknüpfung 
+			zum <literal>mtlO</literal> haben, gebaut mit Name in
+			<literal>tab_name</literal>
+			und id Number in <literal>idclass</literal>, welche ist möglich
+			von Tree Object mit
+			<ulink url="../apidocs/com/qwit/domain/Tree.html#getMtlO()">getMtlO()</ulink>
+			anrufen.
+			Ausname <literal>mtl-tag</literal> Namen welche keine 
+			<literal>mtl-objekten</literal>
+			brauchen, das ist <literal>definition</literal>
+			und <literal>choice</literal>
+			Tag von Protokol,
+			bei diese Tags idclass muss immer <literal>null</literal> sein.
+		</para>
+		<para>
+		Man kann volgende Typen von <literal>mtl-node</literal>
+		erkennen:
+		<itemizedlist>
+			<listitem>
+				<para>
+					<literal>mtl-document</literal> Definition
+					(id==idclass==iddoc)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<literal>mtl-document</literal> Verwendung
+					(id!=idclass==iddoc)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					Innere <literal>mtl-document</literal> Definition
+					(id==idclass!=iddoc, iddoc!=null)
+					z.B. Definition Therapieschema in ein Conzept.
+					Bei inneren Dokumenten <literal>root mtl-node</literal> 
+					von Dokument hat in <literal>iddoc</literal> reference zum sein Parent Dokument
+					aber alle seine Child-Elementen haben in <literal>iddoc</literal>
+					haben referencen zu ihn.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<literal>mtl-node</literal> Definition
+					welche kein Dokument ist
+					(id==idclass, iddoc==null).
+					z.B. Notice, Dose, Day
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<literal>mtl-node</literal> mit Verwendung 
+					<literal>mtlO</literal>
+					-- idclass!=null
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					Lehre <literal>mtl-node</literal> ohne 
+					<literal>mtlO</literal>
+					-- idclass==null
+				</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		
+	</chapter>
+	
+	<chapter><title>Quellcode Erklärung</title>
+	<section>
+		<title>JSPX</title>
+		<section>
+			<title>Explorer</title>
+			<para>
+			.
+			</para>
+		</section>
+		<section>
+			<title>Dokumenten</title>
+			<para>
+			.
+			</para>
+		</section>
+	</section>
+	<section><title>TAG</title>
+		<para>
+			MOPET hat 5 JSPX Tag Direktories.
+		</para>
+		<section><title>EDIT</title>
+			<section><title>panel</title>
+				<para>
+					Baut Dialog-Panel anruff für alle Dokumenten.
+				</para>
+			</section>
+			<section><title>panelExplorer</title>
+				<para>
+					Baut Dialog-Panel anruff für Explorerbereich.
+				</para>
+			</section>
+			<section><title>schemaChangeHistory</title>
+				<para>
+					Generier halb automatisches Text
+					von Therapieschema Modifikation.
+				</para>
+			</section>
+		</section>
+		<section><title>MTL</title>
+			<para>Medical Task Language Tag Library</para>
+			<!-- Noch nicht gefrag 
+			kann sein das nicht benutzt.
+			-->
+			<!--  
+			<section><title>noticeDoseMod</title>
+				<para>
+					Anzeigt begründung und 
+					automatisch generiertes Satz von modificierte teil 
+					von Medikament definition - Dosis oder Tag der Gabe.
+				</para>
+			</section>
+			<section><title>noticeDoseModDose</title>
+				<para>
+					Anzeigt egründung und 
+					automatisch generiertes Satz von modificierte Dosis.
+				</para>
+			</section>
+			 -->
+		</section>
+		<section><title>OWSUI</title>
+			<para>OWS User Interface Tag Library</para>
+			<section id="owsui_docToolbar"><title>docToolbar</title>
+				<para>Dieser Tag baut Toolbar für alle Seitentypen in ganzes Programm.</para>
+				<section><title>Childs</title>
+					<para>
+						<link linkend="owsui_menuItemLinkClick">owsui:menuItemLinkClick</link>,
+						<link linkend="owsui_popupMenuItem">owsui:popupMenuItem</link>
+					</para>
+				</section>
+			</section>
+
+			<section id="owsui_menuItemLinkClick"><title>menuItemLinkClick</title>
+				<para>
+				<informaltable frame="none">
+					<tgroup cols="3">
+						<thead><row><entry>Parameter</entry><entry>Required</entry><entry>Infos</entry></row></thead>
+						<tbody>
+							<row><entry>id</entry><entry>Y</entry>
+								<entry>Ein Wort welcher wird als Befehl oder Aktion Name und letzte Word in Lokalization Muster 
+								ui_menuItemLink_${id} oder mtl_notice_type_${id} verwendet. </entry>
+							</row>
+							<row><entry>idt</entry><entry>Y</entry>
+								<entry>Parent id für neue Block.</entry>
+							</row>
+						</tbody>
+					</tgroup>
+				</informaltable>
+				Tag baut ein <literal>div</literal> welcher wird mit hilfe JS <literal>menuItemClick</literal> 
+				in <literal>dijit.MenuItem</literal> verwandelt. 
+				Klick auf dieses Item liefert ${id} als Aktion zum entsprechende flow.
+				</para>
+			</section>
+
+			<section id="owsui_popupMenuItem"><title>popupMenuItem</title>
+				<para>
+				</para>
+			</section>
+		</section>
+	</section>
+
+	<section>
+		<title>Apache Tiles</title>
+	</section>
+	<section>
+		<title>Java</title>
+	</section>
+	</chapter>
+	<chapter><title>Verschiedenes</title>
+		<section><title>Patienthistory Mtl-Struktur</title>
+			<para>
+			Alle in Patient-Dokument gespeicherte Einheiten soll nach bestimte 
+			Muster gebaut werden. 
+			</para>
+			<para>
+				Jeder Historie-Element hat:
+				<itemizedlist>
+					<listitem>
+						<para><literal>@Sort</literal>
+							attributt mit Wert negative Timestamp 
+							seine Zeitliche angehörigkeit in Secunden Einheit.
+							Für Therapieschema das ist Beginndatum, für Labordaten
+							Zeit z.b. Blutprobe.
+							So wird alle Historie-Elementen nach 
+						</para>
+						<para><literal>@mdate</literal>
+						Attribut wann war diese Element gespeichert
+						und in <literal>@aithor</literal> wer hat das gemacht.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Innere ofDate Element wo in <literal>@mdate</literal>
+							liegt Datum mit selbe Wert und Bedeutung wie in <literal>@sort</literal> 
+							Attribut von Parent-Element.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Inhalte von andere innere Elementen sind Verschiden von 
+							Spezifikation der Erste History-Element.
+							Für Schema das ist verschidene Modifikation Daten, für Labor das ist Elementen mit Labor-Werten
+							und s.w.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section><title>MeTaL-Regeln</title>
+			<para>
+				MeTaL-Regeln sind <literal>if-then-else</literal> Strukturen
+				mit welchen wird Definiert unter welchen Bedingungen
+				soll eine oder andere teile des Therapieplan gehendert werden.
+			</para>
+			<para>
+				Meistens wird das verwendet bei Dosis oder Tages Definition änderungen.
+			</para>
+		</section>
+		<section><title>Versionalisierung</title>
+			<para>
+				MOPET betrachtet nicht die Feste Version bezogene ferbindung
+				zwieschen Programmcode und DB-Strucktur.
+				Stattdessen wird verwendet glechzeitige mit Programm-Update 
+				DB-Update.
+			</para>
+			<para>
+				In Datei <filename>ows-dbUpdateStructure.xml</filename>
+				wird Timestamp kontrolirbar SQL-scripte angerufen welche zum bestimtes
+				Programm-Update nötig ist.
+				Die letzte erfolgreiche DB-Update wird als Timestamp in 
+				<literal>oncoows_db_version</literal>
+				Tabele gespeichert.
+			</para>
+			<para>
+			Bei Initialisierung <literal>documentService</literal> 
+			wird <literal>dbUpdateContainer.dbupdate();</literal> angerufen,
+			welcher erfült SQL-Scripte mit jungere Timestamp als Timestamp von
+			letzte Update in DB.
+			</para>
+		</section>
+	</chapter>
+	<chapter><title>Installation und Update</title>
+		<section><title>Zentrale MOPET Update</title>
+			<para>
+				Zentrale MOPET Server dient uns als zentrale DB wo wird alle Protokole definiert.
+				Jede Klinik-Instalation von MOPET wird von zentrale Server neu und gehenderte Schema importieren.
+				WAR Datei einbau für zentrale MOPET Server Server braucht folgende einstelungen:
+				<programlisting><![CDATA[
+$ ant config.amqp.server
+$ ant config.amqp.connection.fuchs4
+$ mvn package 
+$ scp target/mopet1.war user@server.eu:/home/user/ows4.war
+				]]></programlisting>
+			</para>
+		</section>
+		
+	</chapter>
+	<chapter><title>Utils</title>
+		<section><title>ant</title>
+			<para>
+				Kleinigkeiten zum AMQP configuration
+			</para>
+			<para>
+				<literal>jsp.copy</literal>
+				-- Kopiert nicht java Datei zum target Verzeichnis, dient als schnele tomcat server redeploy bei entwicklung Prozess.
+			</para>
+		</section>
+		<section><title>maven</title>
+			<para>
+				<itemizedlist>
+					<listitem>
+						<para>
+							<literal>mvn site</literal>
+							-- Erstelt Project Dokumentation Seite.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<literal>mvn javadoc:javadoc</literal>
+							-- Erstelt Java API Seite. 
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section><title>eclipse</title>
+		</section>
+</chapter>
+</book>

@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking
+END
+Amenity.java
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/Amenity.java
+END
+SearchCriteria.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/SearchCriteria.java
+END
+Booking.java
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/Booking.java
+END
+BookingService.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/BookingService.java
+END
+Hotel.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/Hotel.java
+END
+BookingFlowHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/BookingFlowHandler.java
+END
+User.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/User.java
+END
+HotelsController.java
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/HotelsController.java
+END
+JpaBookingService.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repository/ows/!svn/ver/4974/sokrathes1/src/main/java/org/springframework/webflow/samples/booking/JpaBookingService.java
+END
